@@ -1,11 +1,14 @@
 <?php
+
+
 /**
  * Created by PhpStorm.
  * User: ThinkPad
  * Date: 2018/10/23
  * Time: 11:36
- * @method get ($url, $data, $option)
- * @method post ($url, $data, $option = array())
+ * @method get ($url, $data= array(), $option= array())
+ * @method post ($url, $data= array(), $option = array())
+ * @return array array('success'=>true,'code'=>200, 'msg'=>$res)
  */
 class Curl
 {
@@ -14,9 +17,9 @@ class Curl
      * @var array
      */
     private $_options = array(
-        'CURLOPT_HEADER' => false,
-        'CURLOPT_RETURNTRANSFER' => true,
-        'CURLOPT_TIMEOUT' => 10,
+        CURLOPT_HEADER => false,
+        CURLOPT_RETURNTRANSFER=> true,
+        CURLOPT_TIMEOUT => 10,
     );
 
     /**
@@ -33,7 +36,9 @@ class Curl
      */
     public function __call($method, $args)
     {
-        $this->_prepareParams($args[0], $args[1] ?: array(), $args[2] ?: array());
+        //设置数据
+        $this->_data = $args[1] ?: array();
+        $this->_prepareParams($args[0], $args[2] ?: array());
         $this->_setMethod($method);
         return $this->_request();
     }
@@ -41,16 +46,14 @@ class Curl
     /**
      * 组织传入的参数
      * @param $url
-     * @param $data
      * @param $option
      * @return bool
      */
-    private function _prepareParams($url, $data, $option)
+    private function _prepareParams($url, $option)
     {
-        //设置数据
-        $this->_data = $data;
+
         if (is_string($url) && strlen($url)) {
-            $this->_options['CURLOPT_URL'] = $url;
+            $this->_options[CURLOPT_URL] = $url;
         } else {
             return false;
         }
@@ -61,8 +64,8 @@ class Curl
             }
         }
         if (stripos($url, "https://") !== FALSE) {
-            $this->_options['CURLOPT_SSL_VERIFYPEER'] = false;
-            $this->_options['CURLOPT_SSL_VERIFYHOST'] = false;
+            $this->_options[CURLOPT_SSL_VERIFYPEER] = false;
+            $this->_options[CURLOPT_SSL_VERIFYHOST] = false;
         }
     }
 
@@ -75,14 +78,14 @@ class Curl
     {
         switch (strtolower($method)) {
             case 'post':
-                $this->_options['CURLOPT_POST'] = true;
-                $this->_options['CURLOPT_POSTFIELDS'] = $this->_data;
+                $this->_options[CURLOPT_POST] = true;
+                $this->_options[CURLOPT_POSTFIELDS] = $this->_data;
                 break;
             case 'get':
-                $this->_options['CURLOPT_URL'] = $this->_options['CURLOPT_URL'] . '?' . http_build_query($this->_data);
+                $this->_options[CURLOPT_URL] = count($this->_data)?$this->_options[CURLOPT_URL] . '?' . http_build_query($this->_data):$this->_options[CURLOPT_URL];
                 break;
             case 'put':
-                $this->_options['CURLOPT_PUT'] = true;
+                $this->_options[CURLOPT_PUT] = true;
                 break;
             default:
                 return false;
@@ -99,11 +102,15 @@ class Curl
         $ch = curl_init();
         curl_setopt_array($ch, $this->_options);
         $res = curl_exec($ch);
-        curl_close($ch);
+
         //异常回传
         if (curl_errno($ch)) {
-            return array(curl_error($ch), curl_errno($ch));
+            $res = array('success'=>false,'code'=>curl_errno($ch), 'msg'=>curl_error($ch));
+        }else{
+            $res = array('success'=>true,'code'=>200, 'msg'=>$res);
         }
+
+        curl_close($ch);
         return $res;
     }
 }
