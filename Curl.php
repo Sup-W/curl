@@ -110,6 +110,7 @@ class Curl
             $res = array('success'=>true,'code'=>200, 'msg'=>$res);
         }
 
+        
         curl_close($ch);
         return $res;
     }
