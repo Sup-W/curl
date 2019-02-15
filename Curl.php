@@ -71,11 +71,6 @@ class Curl
 
     /**
      * 组织传入的参数
-     * @param $url
-     * @param $option
-     * @return bool
-     */
-    /**
      * @param $option
      */
     private function _prepareParams($option)
